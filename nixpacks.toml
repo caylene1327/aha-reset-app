@@ -1,0 +1,16 @@
+[phases.setup]
+nixPkgs = ["nodejs_latest"]
+
+[phases.install]
+cmd = "npm ci"
+
+[phases.build]
+cmd = "npm run build"
+
+[start]
+cmd = "npx serve@latest dist -l $PORT --no-clipboard --single"
+
+[variables]
+# No environment variables required for the static frontend.
+# For email capture integration, add:
+# VITE_API_URL=your-api-url

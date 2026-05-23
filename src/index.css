@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface: #1c1c20;
+  --color-surface-lighter: #242428;
+  --color-surface-light: #2c2c32;
+  --color-text-primary: #e8e8ec;
+  --color-text-secondary: #a0a0a8;
+  --color-text-muted: #6b6b74;
+  --color-accent: #6c9fff;
+  --color-accent-light: rgba(108, 159, 255, 0.12);
+  --color-accent-muted: rgba(108, 159, 255, 0.07);
+  --color-success: #4ade80;
+  --color-border: #2a2a2e;
+  --color-border-light: #36363c;
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --animate-fade-in: fade-in 0.6s ease-out forwards;
+  --animate-slide-up: slide-up 0.5s ease-out forwards;
+  --animate-scale-in: scale-in 0.4s ease-out forwards;
+  --animate-glow: glow 2s ease-in-out infinite alternate;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes glow {
+    from { box-shadow: 0 0 20px rgba(108, 159, 255, 0.05); }
+    to { box-shadow: 0 0 40px rgba(108, 159, 255, 0.12); }
+  }
+}
+
+@layer base {
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    background: #121214;
+    color: var(--color-text-secondary);
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: rgba(108, 159, 255, 0.25);
+    color: #f5f5f7;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #121214;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #2a2a2e;
+    border-radius: 2px;
+  }
+}
+
+@layer utilities {
+  .animate-stagger-1 { animation-delay: 0.1s; }
+  .animate-stagger-2 { animation-delay: 0.2s; }
+  .animate-stagger-3 { animation-delay: 0.3s; }
+  .animate-stagger-4 { animation-delay: 0.4s; }
+  .animate-stagger-5 { animation-delay: 0.5s; }
+}
+
+html {
+  scroll-behavior: smooth;
+}
