@@ -23,7 +23,7 @@ interface CheckoutPlaceholderProps {
 }
 
 export function CheckoutPlaceholder({
-  price = '$XX',
+  price = '$47',
   onCheckout,
 }: CheckoutPlaceholderProps) {
   const handleClick = () => {
