@@ -27,7 +27,7 @@ export function Landing({ onStart }: LandingProps) {
     trackEvent(Events.LANDING_VIEW);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email) return;
 
@@ -47,7 +47,9 @@ export function Landing({ onStart }: LandingProps) {
     console.log('[AHA] Attempting Supabase insert for:', normalizedEmail);
 
     try {
-      const { data, error: dbError } = await supabase
+      // Do NOT chain .select() — we have no SELECT RLS policy.
+      // Insert only; absence of error = success.
+      const { error: dbError } = await supabase
         .from('email_signups')
         .insert({
           email: normalizedEmail,
@@ -55,15 +57,14 @@ export function Landing({ onStart }: LandingProps) {
           utm_source:   utm?.utm_source   ?? null,
           utm_medium:   utm?.utm_medium   ?? null,
           utm_campaign: utm?.utm_campaign ?? null,
-        })
-        .select('id');
+        });
 
-      console.log('[AHA] Supabase response → data:', data, '| error:', dbError);
+      console.log('[AHA] Supabase response → error:', dbError ?? 'none');
 
       if (dbError) {
-        // 23505 = unique_violation: email already exists — still show success
         if (dbError.code === '23505') {
-          console.log('[AHA] Duplicate email — treating as success.');
+          // Duplicate email — user already signed up, show success anyway
+          console.log('[AHA] Duplicate email — showing success.');
         } else {
           console.error('[AHA] Insert failed:', {
             code: dbError.code,
@@ -71,7 +72,14 @@ export function Landing({ onStart }: LandingProps) {
             details: dbError.details,
             hint: dbError.hint,
           });
-          setError('Something went wrong. Please try again.');
+          // Surface a safe, human-readable message
+          const msg =
+            dbError.code === '42501'
+              ? 'Permission error. Please contact support.'
+              : dbError.message
+              ? `Error: ${dbError.message}`
+              : 'Something went wrong. Please try again.';
+          setError(msg);
           setLoading(false);
           return;
         }
