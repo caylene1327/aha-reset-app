@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CheckoutPlaceholder } from './CheckoutPlaceholder';
-import { trackEvent, Events } from '../utils/analytics';
+import { trackEvent, Events, getUTM } from '../utils/analytics';
+import { supabase, supabaseConfigured } from '../lib/supabase';
 
 interface LandingProps {
   onStart: () => void;
@@ -19,17 +20,72 @@ const DAY_OVERVIEW = [
 export function Landing({ onStart }: LandingProps) {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     trackEvent(Events.LANDING_VIEW);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      trackEvent(Events.EMAIL_SUBMIT);
-      setSubmitted(true);
+    if (!email) return;
+
+    // Guard: env vars not configured — fail fast with a clear message
+    if (!supabaseConfigured) {
+      setError('Email capture is not configured. Check environment variables.');
+      console.error('[AHA] handleSubmit aborted — Supabase env vars missing.');
+      return;
     }
+
+    setLoading(true);
+    setError(null);
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const utm = getUTM();
+
+    console.log('[AHA] Attempting Supabase insert for:', normalizedEmail);
+
+    try {
+      const { data, error: dbError } = await supabase
+        .from('email_signups')
+        .insert({
+          email: normalizedEmail,
+          source: 'landing',
+          utm_source:   utm?.utm_source   ?? null,
+          utm_medium:   utm?.utm_medium   ?? null,
+          utm_campaign: utm?.utm_campaign ?? null,
+        })
+        .select('id');
+
+      console.log('[AHA] Supabase response → data:', data, '| error:', dbError);
+
+      if (dbError) {
+        // 23505 = unique_violation: email already exists — still show success
+        if (dbError.code === '23505') {
+          console.log('[AHA] Duplicate email — treating as success.');
+        } else {
+          console.error('[AHA] Insert failed:', {
+            code: dbError.code,
+            message: dbError.message,
+            details: dbError.details,
+            hint: dbError.hint,
+          });
+          setError('Something went wrong. Please try again.');
+          setLoading(false);
+          return;
+        }
+      }
+    } catch (err) {
+      console.error('[AHA] Unexpected error during insert:', err);
+      setError('Network error. Please check your connection and try again.');
+      setLoading(false);
+      return;
+    }
+
+    setLoading(false);
+    trackEvent(Events.EMAIL_SUBMIT);
+    setSubmitted(true);
   };
 
   const handleStart = () => {
@@ -77,13 +133,20 @@ export function Landing({ onStart }: LandingProps) {
               </div>
               <button
                 type="submit"
+                disabled={loading}
                 className="w-full py-3.5 px-4 bg-accent/10 border border-accent/20
                   text-accent text-sm font-medium rounded-xl
                   hover:bg-accent/15 hover:border-accent/30
-                  transition-all duration-300 animate-glow"
+                  transition-all duration-300 animate-glow
+                  disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Send me the first prompt
+                {loading ? 'Sending…' : 'Send me the first prompt'}
               </button>
+              {error && (
+                <p className="text-xs text-center text-red-400 mt-1 px-2 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20">
+                  {error}
+                </p>
+              )}
             </form>
           ) : (
             <div className="text-center space-y-4 animate-scale-in">
