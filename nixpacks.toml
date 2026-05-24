@@ -8,9 +8,12 @@ cmd = "npm ci"
 cmd = "npm run build"
 
 [start]
-cmd = "npx serve@latest dist -l $PORT --no-clipboard --single"
+cmd = "npm start"
 
-[variables]
-# No environment variables required for the static frontend.
-# For email capture integration, add:
-# VITE_API_URL=your-api-url
+# ---------------------------------------------------------------------------
+# Required environment variables — set these in Railway's Variables tab
+# BEFORE deploying. VITE_ vars are baked into the bundle at build time by
+# Vite, so they must be present when `npm run build` runs.
+# ---------------------------------------------------------------------------
+# VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+# VITE_SUPABASE_ANON_KEY=your-anon-public-key
